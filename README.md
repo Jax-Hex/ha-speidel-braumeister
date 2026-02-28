@@ -90,7 +90,7 @@ The Machine UUID is a unique identifier for your Braumeister device. The Speidel
 
 For example, if you find:
 ```html
-<li class="teaser-box-item online" id="device_323" data-machine="1234567890ABCDEF.123" ...>
+<li class="teaser-box-item online" id="device_123" data-machine="1234567890ABCDEF.123" ...>
 ```
 
 Then your Machine UUID is: **`1234567890ABCDEF.123`** (the full `data-machine` value)
@@ -104,7 +104,7 @@ Then your Machine UUID is: **`1234567890ABCDEF.123`** (the full `data-machine` v
 
 For example:
 ```
-https://www.myspeidel.com/braumeister/control/323
+https://www.myspeidel.com/braumeister/control/123
 ```
 
 The short ID is `123`. **However**, the API may require the full combined format. Use Method 1 to get the full identifier.
