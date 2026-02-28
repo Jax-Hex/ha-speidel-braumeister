@@ -421,7 +421,7 @@ class SpeidelBraumeisterAPI:
         
         The Speidel API may accept different formats:
         - "323" (short ID)
-        - "0004A30B003D70F4" (long UUID)
+        - "1234567890ABCDEF" (long UUID)
         - "1234567890ABCDEF.123" (combined format)
         """
         variants = [machine_uuid]
