@@ -85,7 +85,7 @@ The Machine UUID is a unique identifier for your Braumeister device. The Speidel
 1. Log in to [My Speidel](https://www.myspeidel.com)
 2. Go to your Braumeister's control page
 3. Right-click on the page and select "View Page Source" or "Inspect"
-4. Search for `data-machine=` in the HTML
+4. Search for `data-machine=` or `var-device=` in the HTML
 5. The full machine identifier is in this attribute
 
 For example, if you find:
