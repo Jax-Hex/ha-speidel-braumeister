@@ -25,14 +25,20 @@ class SpeidelBraumeisterEntity(CoordinatorEntity[SpeidelBraumeisterDataCoordinat
 
         # Use machine UUID for device identification
         device_id = coordinator.machine_uuid
-        
+
         self._attr_unique_id = f"{device_id}_{entity_key}"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, device_id)},
             name=NAME,
             manufacturer=MANUFACTURER,
             model="Braumeister",
+            configuration_url=f"https://www.myspeidel.com/braumeister",
         )
+
+    @property
+    def icon(self) -> str:
+        """Return custom icon from brand directory."""
+        return f"/local/custom_components/{DOMAIN}/brand/icon.png"
 
     @property
     def available(self) -> bool:

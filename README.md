@@ -116,7 +116,7 @@ The integration supports multiple UUID formats and will try them automatically:
 - **Short ID**: `123`
 - **Long UUID**: `1234567890ABCDEF`
 
-**We recommend using the combined format** from the `data-machine` attribute for best results.
+**We recommend using the combined format** from the `data-machine` or `var device` attribute for best results.
 
 ## Prerequisites
 

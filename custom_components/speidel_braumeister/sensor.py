@@ -43,6 +43,18 @@ class SpeidelBraumeisterSensor(SpeidelBraumeisterEntity, SensorEntity):
         self.entity_description = description
 
     @property
+    def icon(self) -> str:
+        """Return custom icon from brand directory for specific sensors."""
+        # Use custom icons for specific sensors, fall back to MDI for others
+        key = self.entity_description.key
+        if key == "temperature":
+            return f"/local/custom_components/{DOMAIN}/brand/icon.png"
+        if key == "brew_name":
+            return f"/local/custom_components/{DOMAIN}/brand/logo.png"
+        # Use MDI icon from entity_description for other sensors
+        return self.entity_description.icon
+
+    @property
     def native_value(self) -> Any:
         """Return the sensor value."""
         data = self.coordinator.data
