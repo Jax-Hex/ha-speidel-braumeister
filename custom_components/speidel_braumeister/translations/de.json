@@ -110,6 +110,11 @@
       "next_phase": {
         "name": "Nächste Phase"
       }
+    },
+    "binary_sensor": {
+      "alarm": {
+        "name": "Alarm"
+      }
     }
   }
 }

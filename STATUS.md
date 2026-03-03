@@ -1,4 +1,14 @@
 # STATUS
+## BINARY SENSOR: ALARM
+
+### States
+
+The Alarm sensor becomes `ON` (true) when the current phase is:
+- `Einmaischen Temp. erreicht` - Mash-in temperature reached
+- `Rastende erreicht` - Rest end reached
+
+This matches the alarm states in the Braumeister device and Speidel WebUI.
+
 ## CURRENT PHASE
 - Prost!
 - Jetzt Whirlpool …

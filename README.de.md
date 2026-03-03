@@ -27,6 +27,12 @@ Eine Home Assistant Integration für Speidel Braumeister Brauanlagen über die M
 | Braufortschritt | Fortschrittsprozentsatz des aktuellen Brauvorgangs |
 | Zuletzt online | Letzte Zeit, zu der das Gerät online war |
 
+### Binäre Sensoren
+
+| Binärer Sensor | Beschreibung |
+|-----------------|-------------|
+| Alarm | Wird `AN`, wenn der Braumeister einen Alarmzustand erreicht (Einmaischtemperatur erreicht oder Rastende erreicht) |
+
 ### Rezeptinformationen
 
 Der Sensor "Brauname" enthält zusätzliche Attribute:

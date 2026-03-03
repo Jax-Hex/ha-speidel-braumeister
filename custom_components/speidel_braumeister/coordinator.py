@@ -249,8 +249,29 @@ class SpeidelBraumeisterDataCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             if self._api.payment_required:
                 result["payment_required"] = True
             
+            # Debug: log what we received
+            _LOGGER.debug("API returned data of type: %s", type(api_data).__name__)
+            
             # Convert Pydantic model to dict
-            api_dict = api_data.model_dump() if hasattr(api_data, 'model_dump') else dict(api_data)
+            # Use model_dump() for Pydantic v2
+            try:
+                if hasattr(api_data, 'model_dump'):
+                    _LOGGER.debug("Using model_dump() for conversion")
+                    api_dict = api_data.model_dump()
+                elif hasattr(api_data, 'dict'):
+                    # Pydantic v1 fallback
+                    _LOGGER.debug("Using dict() for Pydantic v1")
+                    api_dict = api_data.dict()
+                elif isinstance(api_data, dict):
+                    _LOGGER.debug("API data is already a dict")
+                    api_dict = api_data
+                else:
+                    # Last resort: try to convert to dict manually
+                    _LOGGER.debug("Using vars() for manual conversion")
+                    api_dict = {k: v for k, v in vars(api_data).items() if not k.startswith('_')}
+            except Exception as conv_err:
+                _LOGGER.error("Failed to convert api_data to dict: %s", conv_err)
+                raise
             
             # Check if we got valid data
             if api_dict.get('temperature') is not None or api_dict.get('connection_status') == 'online':

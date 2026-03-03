@@ -27,6 +27,12 @@ A Home Assistant integration for Speidel Braumeister brewing systems via the My 
 | Brewing Progress | Progress percentage of the current brew |
 | Last Online | Last time the device was online |
 
+### Binary Sensors
+
+| Binary Sensors | Description |
+|-----------------|-------------|
+| Alarm | Wird `AN`, wenn der Braumeister einen Alarmzustand erreicht (Einmaischtemperatur erreicht oder Rastende erreicht) |
+
 ### Recipe Information
 
 The Brew Name sensor includes additional attributes:

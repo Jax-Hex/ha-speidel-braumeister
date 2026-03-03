@@ -3,6 +3,7 @@
 from typing import Final
 
 from homeassistant.components.sensor import SensorEntityDescription
+from homeassistant.components.binary_sensor import BinarySensorEntityDescription
 
 # Integration domain
 DOMAIN: Final = "speidel_braumeister"
@@ -112,6 +113,16 @@ SENSOR_TYPES: Final[tuple[SensorEntityDescription, ...]] = (
         key="last_online",
         translation_key="last_online",
         icon="mdi:clock-outline",
+    ),
+)
+
+# Binary sensor types using BinarySensorEntityDescription
+# Note: Names are provided via translations (strings.json and translations/*.json)
+BINARY_SENSOR_TYPES: Final[tuple[BinarySensorEntityDescription, ...]] = (
+    BinarySensorEntityDescription(
+        key="alarm",
+        translation_key="alarm",
+        icon="mdi:alert-light",
     ),
 )
 
