@@ -1,4 +1,4 @@
-# Speidel Braumeister Home Assistant Integration
+# Speidel Braumeister Home Assistant Integration for Firmware V1.1.27 Sep 12 2018
 
 [![hacs][hacs-badge]][hacs]
 [![GitHub Release][release-badge]][release]
