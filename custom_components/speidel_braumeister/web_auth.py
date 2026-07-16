@@ -181,6 +181,11 @@ class SpeidelWebAuth:
         if self._device_recipes and self._account_recipes and not self._recipe_mapping:
             self._build_recipe_mapping()
         
+        # Check if this is a 2021+ model (e.g. "Braumeister 20 Liter (2021)")
+        if self._device_type and ("2021" in self._device_type or "touch" in self._device_type.lower()) and self._device_info:
+            _LOGGER.info("Parsing 2021+ touchscreen model status from device info JSON")
+            return self._parse_json_response(self._device_info)
+        
         for device_id in id_variants:
             url = f"{WEB_BASE_URL}/braumeister/getDeviceStatusControl/{device_id}"
             
@@ -262,6 +267,7 @@ class SpeidelWebAuth:
                             
                             # Store full device info for later use
                             self._device_info = {
+                                **data,
                                 'device_type': self._device_type,
                                 'device_name': self._device_name,
                                 'last_online': self._last_online,
@@ -529,6 +535,81 @@ class SpeidelWebAuth:
         except Exception as err:
             _LOGGER.error("Error parsing XHR response: %s", err)
             return {}
+
+    def _parse_json_response(self, data: dict[str, Any]) -> dict[str, Any]:
+        """Parse the JSON response for 2021+ touchscreen models."""
+        result = {
+            'raw': str(data),
+            'connection_status': 'online' if data.get('online') else 'offline'
+        }
+        
+        # Device details
+        if self._device_name:
+            result['device_name'] = self._device_name
+        if self._device_type:
+            result['device_type'] = self._device_type
+        if self._last_online:
+            result['last_online'] = self._last_online
+            
+        result['device_mode'] = data.get('deviceMode')
+        result['current_step'] = data.get('screenTitle') or None
+        result['progress'] = data.get('progress') or 0
+        result['current_stage'] = data.get('currentStage')
+        result['screen_function'] = data.get('screenFunction')
+
+        # Real-time sensors
+        result['temperature'] = data.get('deviceTemp')
+        result['target_temperature'] = data.get('deviceSetTemp')
+        
+        pumping = data.get('pumping')
+        result['pump'] = 'on' if pumping == 1 or pumping is True else 'off'
+        
+        heating = data.get('heating')
+        result['heating'] = 'on' if heating == 1 or heating is True else 'off'
+
+        # Remaining time
+        runtime = data.get('deviceRunTime')
+        if isinstance(runtime, (int, float)):
+            result['remaining_seconds'] = int(runtime)
+            result['remaining_time'] = int(runtime) // 60
+        elif isinstance(runtime, str) and ':' in runtime:
+            parts = runtime.split(':')
+            try:
+                if len(parts) == 3:
+                    secs = int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
+                elif len(parts) == 2:
+                    secs = int(parts[0]) * 60 + int(parts[1])
+                else:
+                    secs = int(parts[0])
+                result['remaining_seconds'] = secs
+                result['remaining_time'] = secs // 60
+            except ValueError:
+                pass
+        
+        # Brew/recipe name
+        show_recipe = data.get('showRecipe')
+        if show_recipe:
+            result['brew_name'] = show_recipe
+        else:
+            # Fall back to current stage slot if matched
+            current_stage = data.get('currentStage')
+            if isinstance(current_stage, int) and current_stage in self._device_recipes:
+                result['brew_name'] = self._device_recipes[current_stage]
+
+        # Process status
+        if result['temperature'] is not None:
+            if result.get('remaining_seconds') and result['remaining_seconds'] > 0:
+                result['process_status'] = 'running'
+            else:
+                result['process_status'] = 'idle'
+        else:
+            result['process_status'] = 'unknown'
+
+        _LOGGER.info("Parsed JSON status: temp=%s°C, recipe=%s, step=%s, mode=%s",
+                    result.get('temperature'), result.get('brew_name'),
+                    result.get('current_step'), result.get('device_mode'))
+
+        return result
 
     @property
     def session_value(self) -> Optional[str]:

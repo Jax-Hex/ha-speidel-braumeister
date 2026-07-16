@@ -258,6 +258,35 @@ class SpeidelXHRClient:
         # Try different ID formats
         id_variants = self._get_id_variants(machine_id)
         
+        # Check if the device is a 2021+ model by fetching the JSON status endpoint
+        for device_id in id_variants:
+            json_url = f"{WEB_BASE_URL}/braumeister/getDeviceStatus/{device_id}"
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json, */*',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Referer': f"{WEB_BASE_URL}/braumeister",
+            }
+            try:
+                async with session.get(json_url, headers=headers) as response:
+                    if response.status == 200:
+                        text = await response.text()
+                        if text.startswith('{'):
+                            import json
+                            data = json.loads(text)
+                            machine_info = data.get('machineInfo') or {}
+                            machine_type = machine_info.get('machine_type') or {}
+                            device_type = machine_type.get('text', '')
+                            
+                            # If it's a 2021+ model (e.g. text contains "2021" or "touch")
+                            if "2021" in device_type or "touch" in device_type.lower():
+                                _LOGGER.info("Detected 2021+ touchscreen model via JSON status for %s", device_id)
+                                parsed = self._parse_json_response(data, device_type, machine_info.get('name'))
+                                if parsed:
+                                    return parsed
+            except Exception as err:
+                _LOGGER.debug("JSON status fetch error: %s", err)
+        
         for device_id in id_variants:
             url = f"{WEB_BASE_URL}/braumeister/getDeviceStatusControl/{device_id}"
             
@@ -433,6 +462,81 @@ class SpeidelXHRClient:
         except Exception as err:
             _LOGGER.error("Error parsing XHR response: %s", err)
             return {}
+
+    def _parse_json_response(self, data: dict[str, Any], device_type: str, device_name: str) -> dict[str, Any]:
+        """Parse the JSON response for 2021+ touchscreen models."""
+        result = {
+            'raw': str(data),
+            'connection_status': 'online' if data.get('online') else 'offline'
+        }
+        
+        # Device details
+        if device_name:
+            result['device_name'] = device_name
+        if device_type:
+            result['device_type'] = device_type
+            
+        # Extract last online
+        last_online = data.get('lastOnline')
+        if not last_online and 'machineInfo' in data:
+            last_online = data['machineInfo'].get('last_online')
+        if last_online:
+            result['last_online'] = last_online
+            
+        result['device_mode'] = data.get('deviceMode')
+        result['current_step'] = data.get('screenTitle') or None
+        result['progress'] = data.get('progress') or 0
+        result['current_stage'] = data.get('currentStage')
+        result['screen_function'] = data.get('screenFunction')
+
+        # Real-time sensors
+        result['temperature'] = data.get('deviceTemp')
+        result['target_temperature'] = data.get('deviceSetTemp')
+        
+        pumping = data.get('pumping')
+        result['pump'] = 'on' if pumping == 1 or pumping is True else 'off'
+        
+        heating = data.get('heating')
+        result['heating'] = 'on' if heating == 1 or heating is True else 'off'
+
+        # Remaining time
+        runtime = data.get('deviceRunTime')
+        if isinstance(runtime, (int, float)):
+            result['remaining_seconds'] = int(runtime)
+            result['remaining_time'] = int(runtime) // 60
+        elif isinstance(runtime, str) and ':' in runtime:
+            parts = runtime.split(':')
+            try:
+                if len(parts) == 3:
+                    secs = int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
+                elif len(parts) == 2:
+                    secs = int(parts[0]) * 60 + int(parts[1])
+                else:
+                    secs = int(parts[0])
+                result['remaining_seconds'] = secs
+                result['remaining_time'] = secs // 60
+            except ValueError:
+                pass
+        
+        # Brew/recipe name
+        show_recipe = data.get('showRecipe')
+        if show_recipe:
+            result['brew_name'] = show_recipe
+
+        # Process status
+        if result['temperature'] is not None:
+            if result.get('remaining_seconds') and result['remaining_seconds'] > 0:
+                result['process_status'] = 'running'
+            else:
+                result['process_status'] = 'idle'
+        else:
+            result['process_status'] = 'unknown'
+
+        _LOGGER.info("Parsed JSON status (XHR Client): temp=%s°C, recipe=%s, step=%s, mode=%s",
+                    result.get('temperature'), result.get('brew_name'),
+                    result.get('current_step'), result.get('device_mode'))
+
+        return result
 
     @property
     def machines(self) -> list[dict]:
